@@ -144,7 +144,7 @@ class PhpFrejaeid {
       $userType  = 'N/A',
       $userInfo  = 'N/A',
       $authLevel = 'BASIC',
-      $requestInfo = NULL
+      $requestInfo = ['EMAIL_ADDRESS', 'RELYING_PARTY_USER_ID']
     ) {
 
         // If no request info provided...
@@ -277,6 +277,7 @@ class PhpFrejaeid {
                  if (in_array('AGE', $requestInfo))                 array_push($query->attributesToReturn, $ageAttribute);
                  if (in_array('SSN', $requestInfo))                 array_push($query->attributesToReturn, $ssnAttribute);
                  if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('RELYING_PARTY_USER_ID', $requestInfo))           array_push($query->attributesToReturn, $userAttribute);
                  break;
 
             // If PLUS - return PLUS data
@@ -290,6 +291,7 @@ class PhpFrejaeid {
                  if (in_array('AGE', $requestInfo))                 array_push($query->attributesToReturn, $ageAttribute);
                  if (in_array('SSN', $requestInfo))                 array_push($query->attributesToReturn, $ssnAttribute);
                  if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('RELYING_PARTY_USER_ID', $requestInfo))           array_push($query->attributesToReturn, $userAttribute);
                  break;
 
             // Another case throw an exception
@@ -332,7 +334,7 @@ class PhpFrejaeid {
       $agreementText,
       $agreementTitle,
       $authLevel = 'BASIC',
-      $requestInfo = NULL,
+      $requestInfo = ['EMAIL_ADDRESS', 'RELYING_PARTY_USER_ID'],
       $timeoutMinutes = 2,
       $confidential = false,
       $pushTitle = NULL,
@@ -467,6 +469,7 @@ class PhpFrejaeid {
                  if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) array_push($query->attributesToReturn, $allEmailsAttribute);
                  if (in_array('ALL_PHONE_NUMBERS', $requestInfo))   array_push($query->attributesToReturn, $allPhonesAttribute);
                  if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('RELYING_PARTY_USER_ID', $requestInfo))           array_push($query->attributesToReturn, $userAttribute);
                  break;
 
             // If PLUS - return PLUS data
@@ -480,6 +483,7 @@ class PhpFrejaeid {
                  if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) array_push($query->attributesToReturn, $allEmailsAttribute);
                  if (in_array('ALL_PHONE_NUMBERS', $requestInfo))   array_push($query->attributesToReturn, $allPhonesAttribute);
                  if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('RELYING_PARTY_USER_ID', $requestInfo))           array_push($query->attributesToReturn, $userAttribute);
                  break;
 
             // Another case throw an exception
