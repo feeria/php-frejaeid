@@ -671,7 +671,7 @@ class PhpFrejaeid {
             CURLOPT_TIMEOUT             => 30,
             CURLOPT_MAXREDIRS           => 2,
             CURLOPT_HTTPHEADER          => $apiHeader,
-            CURLOPT_USERAGENT           => 'phpFreja/1.0', //TODO to class name
+            CURLOPT_USERAGENT           => 'Feeria/PhpFrejaeid/PhpFrejaeid/1.0',
             CURLOPT_POSTFIELDS          => $apiPostQuery,
             CURLOPT_SSLCERTTYPE         => 'P12',
             CURLOPT_SSLCERT             => $this->certificate,
