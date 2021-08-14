@@ -500,7 +500,7 @@ class PhpFrejaeid {
         $dataToSign = new \stdClass();
         $dataToSign->text = base64_encode($agreementText);
 
-        if ( is_null($this->binaryData)) ) {
+        if ( is_null($this->binaryData) ) {
             $query->dataToSign      = $dataToSign;
             $query->dataToSignType  = 'SIMPLE_UTF8_TEXT';
             $query->signatureType   = 'SIMPLE';
