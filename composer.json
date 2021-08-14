@@ -1,0 +1,22 @@
+{
+    "name": "feeria/php-frejaeid",
+    "description": "Freja eID API PHP integration package. Original development by DSorlov/phpFreja.",
+    "keywords": [ "laravel frejaeid", "laravel freja eid", "php frejaeid", "php freja eid", "freja", "freja eid", "frejaeid", "auth", "swedish frejaeid", "svenska frejaeid"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexander Mukbil - Kalifornijos kryptis, UAB (Feeria)",
+            "email": "hi@feeria.lt"
+        }
+    ],
+    "require": {
+      "php": ">=5.6.40",
+      "gamegos/jws": "~1.0"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Feeria\\PhpFrejaeid\\": "src/"
+        }
+    }
+}
