@@ -162,10 +162,8 @@ class PhpFrejaeid {
         }
 
         // Set RELYING_PARTY_USER_ID attribute
-        if (in_array('RELYING_PARTY_USER_ID', $requestInfo)) {
-          $userAttribute = new \stdClass();
-          $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
-        }
+        $userAttribute = new \stdClass();
+        $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
 
         // Set BASIC_USER_INFO attribute
         if (in_array('BASIC_USER_INFO', $requestInfo)) {
@@ -355,10 +353,8 @@ class PhpFrejaeid {
         }
 
         // Set RELYING_PARTY_USER_ID attribute
-        if (in_array('RELYING_PARTY_USER_ID', $requestInfo)) {
-          $userAttribute = new \stdClass();
-          $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
-        }
+        $userAttribute = new \stdClass();
+        $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
 
         // Set BASIC_USER_INFO attribute
         if (in_array('BASIC_USER_INFO', $requestInfo)) {
