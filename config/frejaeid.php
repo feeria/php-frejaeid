@@ -23,7 +23,7 @@ return [
     |
     */
 
-    'pdf' => [
+    'frejaeid' => [
         'production_mode' => env('FREJAEID_API_PRODUCTION_MODE', false),
         'secret_password' => env('FREJAEID_API_PASSWORD', null),
         'auth_level'      => env('FREJAEID_API_AUTH_LEVEL', 'BASIC'),
