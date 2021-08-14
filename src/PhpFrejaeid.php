@@ -337,7 +337,7 @@ class PhpFrejaeid {
       $confidential = false,
       $pushTitle = NULL,
       $pushMessage = NULL,
-      $binaryData = NULL,
+      $binaryData = NULL
     ) {
 
         // If no request info provided...
