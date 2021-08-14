@@ -143,48 +143,77 @@ class PhpFrejaeid {
     public function initAuthentication(
       $userType  = 'N/A',
       $userInfo  = 'N/A',
-      $authLevel = 'BASIC'
+      $authLevel = 'BASIC',
+      $requestInfo = NULL
     ) {
 
+        // If no request info provided...
+        if ($requestInfo = null) {
+          return $this->createErrorObject(
+            400,
+            'Missing request info from FrejaeID. Please request one or several attributes for EXTENDED and PLUS levels: EMAIL_ADDRESS, RELYING_PARTY_USER_ID, BASIC_USER_INFO, DATE_OF_BIRTH, SSN, ALL_EMAIL_ADDRESSES, ALL_PHONE_NUMBERS, AGE, ADDRESSES, REGISTRATION_LEVEL. For BASIC level allowed only: EMAIL_ADDRESS, REGISTRATION_LEVEL'
+          );
+        }
+
         // Set EMAIL_ADDRESS attribute
-        $emailAttribute = new \stdClass();
-        $emailAttribute->attribute = 'EMAIL_ADDRESS';
+        if (in_array('EMAIL_ADDRESS', $requestInfo)) {
+          $emailAttribute = new \stdClass();
+          $emailAttribute->attribute = 'EMAIL_ADDRESS';
+        }
 
         // Set RELYING_PARTY_USER_ID attribute
-        $userAttribute = new \stdClass();
-        $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
+        if (in_array('RELYING_PARTY_USER_ID', $requestInfo)) {
+          $userAttribute = new \stdClass();
+          $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
+        }
 
         // Set BASIC_USER_INFO attribute
-        $basicAttribute = new \stdClass();
-        $basicAttribute->attribute = 'BASIC_USER_INFO';
+        if (in_array('BASIC_USER_INFO', $requestInfo)) {
+          $basicAttribute = new \stdClass();
+          $basicAttribute->attribute = 'BASIC_USER_INFO';
+        }
 
         // Set DATE_OF_BIRTH attribute
-        $dobAttribute = new \stdClass();
-        $dobAttribute->attribute = 'DATE_OF_BIRTH';
+        if (in_array('DATE_OF_BIRTH', $requestInfo)) {
+          $dobAttribute = new \stdClass();
+          $dobAttribute->attribute = 'DATE_OF_BIRTH';
+        }
 
         // Set SSN attribute
-        $ssnAttribute = new \stdClass();
-        $ssnAttribute->attribute = 'SSN';
+        if (in_array('SSN', $requestInfo)) {
+          $ssnAttribute = new \stdClass();
+          $ssnAttribute->attribute = 'SSN';
+        }
 
         // Set ALL_EMAIL_ADDRESSES attribute
-        $allEmailsAttribute = new \stdClass();
-        $allEmailsAttribute->attribute = 'ALL_EMAIL_ADDRESSES';
+        if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) {
+          $allEmailsAttribute = new \stdClass();
+          $allEmailsAttribute->attribute = 'ALL_EMAIL_ADDRESSES';
+        }
 
         // Set ALL_PHONE_NUMBERS attribute
-        $allPhonesAttribute = new \stdClass();
-        $allPhonesAttribute->attribute = 'ALL_PHONE_NUMBERS';
+        if (in_array('ALL_PHONE_NUMBERS', $requestInfo)) {
+          $allPhonesAttribute = new \stdClass();
+          $allPhonesAttribute->attribute = 'ALL_PHONE_NUMBERS';
+        }
 
         // Set AGE attribute
-        $ageAttribute = new \stdClass();
-        $ageAttribute->attribute = 'AGE';
+        if (in_array('AGE', $requestInfo)) {
+          $ageAttribute = new \stdClass();
+          $ageAttribute->attribute = 'AGE';
+        }
 
         // Set ADDRESSES attribute
-        $allAddressesAttribute = new \stdClass();
-        $allAddressesAttribute->attribute = 'ADDRESSES';
+        if (in_array('ADDRESSES', $requestInfo)) {
+          $allAddressesAttribute = new \stdClass();
+          $allAddressesAttribute->attribute = 'ADDRESSES';
+        }
 
         // Set REGISTRATION_LEVEL attribute
-        $registrationLevelAttribute = new \stdClass();
-        $registrationLevelAttribute->attribute = 'REGISTRATION_LEVEL';
+        if (in_array('REGISTRATION_LEVEL', $requestInfo)) {
+          $registrationLevelAttribute = new \stdClass();
+          $registrationLevelAttribute->attribute = 'REGISTRATION_LEVEL';
+        }
 
         // Push all requested attributes to array
         $query = new \stdClass();
@@ -234,33 +263,33 @@ class PhpFrejaeid {
             // If BASIC - return BASIC data
             case 'BASIC':
                  $query->minRegistrationLevel = 'BASIC';
-                 array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 if (in_array('REGISTRATION_LEVEL', $requestInfo))  array_push($query->attributesToReturn, $registrationLevelAttribute);
                  break;
 
             // If EXTENDED - return EXTENDED data
             case 'EXTENDED':
                  $query->minRegistrationLevel = 'EXTENDED';
-                 array_push($query->attributesToReturn, $basicAttribute);
-                 array_push($query->attributesToReturn, $registrationLevelAttribute);
-                 array_push($query->attributesToReturn, $allEmailsAttribute);
-                 array_push($query->attributesToReturn, $allPhonesAttribute);
-                 array_push($query->attributesToReturn, $dobAttribute);
-                 array_push($query->attributesToReturn, $ageAttribute);
-                 array_push($query->attributesToReturn, $ssnAttribute);
-                 array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('BASIC_USER_INFO', $requestInfo))     array_push($query->attributesToReturn, $basicAttribute);
+                 if (in_array('REGISTRATION_LEVEL', $requestInfo))  array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) array_push($query->attributesToReturn, $allEmailsAttribute);
+                 if (in_array('ALL_PHONE_NUMBERS', $requestInfo))   array_push($query->attributesToReturn, $allPhonesAttribute);
+                 if (in_array('DATE_OF_BIRTH', $requestInfo))       array_push($query->attributesToReturn, $dobAttribute);
+                 if (in_array('AGE', $requestInfo))                 array_push($query->attributesToReturn, $ageAttribute);
+                 if (in_array('SSN', $requestInfo))                 array_push($query->attributesToReturn, $ssnAttribute);
+                 if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // If PLUS - return PLUS data
             case 'PLUS':
                  $query->minRegistrationLevel = 'PLUS';
-                 array_push($query->attributesToReturn, $basicAttribute);
-                 array_push($query->attributesToReturn, $registrationLevelAttribute);
-                 array_push($query->attributesToReturn, $allEmailsAttribute);
-                 array_push($query->attributesToReturn, $allPhonesAttribute);
-                 array_push($query->attributesToReturn, $dobAttribute);
-                 array_push($query->attributesToReturn, $ageAttribute);
-                 array_push($query->attributesToReturn, $ssnAttribute);
-                 array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('BASIC_USER_INFO', $requestInfo))     array_push($query->attributesToReturn, $basicAttribute);
+                 if (in_array('REGISTRATION_LEVEL', $requestInfo))  array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) array_push($query->attributesToReturn, $allEmailsAttribute);
+                 if (in_array('ALL_PHONE_NUMBERS', $requestInfo))   array_push($query->attributesToReturn, $allPhonesAttribute);
+                 if (in_array('DATE_OF_BIRTH', $requestInfo))       array_push($query->attributesToReturn, $dobAttribute);
+                 if (in_array('AGE', $requestInfo))                 array_push($query->attributesToReturn, $ageAttribute);
+                 if (in_array('SSN', $requestInfo))                 array_push($query->attributesToReturn, $ssnAttribute);
+                 if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // Another case throw an exception
@@ -303,52 +332,81 @@ class PhpFrejaeid {
       $agreementText,
       $agreementTitle,
       $authLevel = 'BASIC',
+      $requestInfo = NULL,
       $timeoutMinutes = 2,
       $confidential = false,
       $pushTitle = NULL,
       $pushMessage = NULL,
-      $binaryData = NULL
+      $binaryData = NULL,
     ) {
 
+        // If no request info provided...
+        if ($requestInfo = null) {
+          return $this->createErrorObject(
+            400,
+            'Missing request info from FrejaeID. Please request one or several attributes for EXTENDED and PLUS levels: EMAIL_ADDRESS, RELYING_PARTY_USER_ID, BASIC_USER_INFO, DATE_OF_BIRTH, SSN, ALL_EMAIL_ADDRESSES, ALL_PHONE_NUMBERS, AGE, ADDRESSES, REGISTRATION_LEVEL. For BASIC level allowed only: EMAIL_ADDRESS, REGISTRATION_LEVEL'
+          );
+        }
+
         // Set EMAIL_ADDRESS attribute
-        $emailAttribute = new \stdClass();
-        $emailAttribute->attribute = 'EMAIL_ADDRESS';
+        if (in_array('EMAIL_ADDRESS', $requestInfo)) {
+          $emailAttribute = new \stdClass();
+          $emailAttribute->attribute = 'EMAIL_ADDRESS';
+        }
 
         // Set RELYING_PARTY_USER_ID attribute
-        $userAttribute = new \stdClass();
-        $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
+        if (in_array('RELYING_PARTY_USER_ID', $requestInfo)) {
+          $userAttribute = new \stdClass();
+          $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
+        }
 
         // Set BASIC_USER_INFO attribute
-        $basicAttribute = new \stdClass();
-        $basicAttribute->attribute = 'BASIC_USER_INFO';
+        if (in_array('BASIC_USER_INFO', $requestInfo)) {
+          $basicAttribute = new \stdClass();
+          $basicAttribute->attribute = 'BASIC_USER_INFO';
+        }
 
         // Set DATE_OF_BIRTH attribute
-        $dobAttribute = new \stdClass();
-        $dobAttribute->attribute = 'DATE_OF_BIRTH';
+        if (in_array('DATE_OF_BIRTH', $requestInfo)) {
+          $dobAttribute = new \stdClass();
+          $dobAttribute->attribute = 'DATE_OF_BIRTH';
+        }
 
         // Set SSN attribute
-        $ssnAttribute = new \stdClass();
-        $ssnAttribute->attribute = 'SSN';
+        if (in_array('SSN', $requestInfo)) {
+          $ssnAttribute = new \stdClass();
+          $ssnAttribute->attribute = 'SSN';
+        }
 
         // Set ALL_EMAIL_ADDRESSES attribute
-        $allEmailsAttribute = new \stdClass();
-        $allEmailsAttribute->attribute = 'ALL_EMAIL_ADDRESSES';
+        if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) {
+          $allEmailsAttribute = new \stdClass();
+          $allEmailsAttribute->attribute = 'ALL_EMAIL_ADDRESSES';
+        }
 
         // Set ALL_PHONE_NUMBERS attribute
-        $allPhonesAttribute = new \stdClass();
-        $allPhonesAttribute->attribute = 'ALL_PHONE_NUMBERS';
+        if (in_array('ALL_PHONE_NUMBERS', $requestInfo)) {
+          $allPhonesAttribute = new \stdClass();
+          $allPhonesAttribute->attribute = 'ALL_PHONE_NUMBERS';
+        }
 
         // Set AGE attribute
-        $ageAttribute = new \stdClass();
-        $ageAttribute->attribute = 'AGE';
+        if (in_array('AGE', $requestInfo)) {
+          $ageAttribute = new \stdClass();
+          $ageAttribute->attribute = 'AGE';
+        }
 
         // Set ADDRESSES attribute
-        $allAddressesAttribute = new \stdClass();
-        $allAddressesAttribute->attribute = 'ADDRESSES';
+        if (in_array('ADDRESSES', $requestInfo)) {
+          $allAddressesAttribute = new \stdClass();
+          $allAddressesAttribute->attribute = 'ADDRESSES';
+        }
 
         // Set REGISTRATION_LEVEL attribute
-        $registrationLevelAttribute = new \stdClass();
-        $registrationLevelAttribute->attribute = 'REGISTRATION_LEVEL';
+        if (in_array('REGISTRATION_LEVEL', $requestInfo)) {
+          $registrationLevelAttribute = new \stdClass();
+          $registrationLevelAttribute->attribute = 'REGISTRATION_LEVEL';
+        }
 
         // Push all requested attributes to array
         $query = new \stdClass();
@@ -395,37 +453,33 @@ class PhpFrejaeid {
             // If BASIC - return BASIC data
             case 'BASIC':
                  $query->minRegistrationLevel = 'BASIC';
-                 array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 if (in_array('REGISTRATION_LEVEL', $requestInfo))  array_push($query->attributesToReturn, $registrationLevelAttribute);
                  break;
 
             // If EXTENDED - return EXTENDED data
             case 'EXTENDED':
                  $query->minRegistrationLevel = 'EXTENDED';
-                 array_push($query->attributesToReturn, $basicAttribute);
-                 array_push($query->attributesToReturn, $dobAttribute);
-                 array_push($query->attributesToReturn, $ssnAttribute);
-                 array_push($query->attributesToReturn, $registrationLevelAttribute);
-                 array_push($query->attributesToReturn, $allEmailsAttribute);
-                 array_push($query->attributesToReturn, $allPhonesAttribute);
-                 array_push($query->attributesToReturn, $dobAttribute);
-                 array_push($query->attributesToReturn, $ageAttribute);
-                 array_push($query->attributesToReturn, $ssnAttribute);
-                 array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('BASIC_USER_INFO', $requestInfo))     array_push($query->attributesToReturn, $basicAttribute);
+                 if (in_array('DATE_OF_BIRTH', $requestInfo))       array_push($query->attributesToReturn, $dobAttribute);
+                 if (in_array('AGE', $requestInfo))                 array_push($query->attributesToReturn, $ageAttribute);
+                 if (in_array('SSN', $requestInfo))                 array_push($query->attributesToReturn, $ssnAttribute);
+                 if (in_array('REGISTRATION_LEVEL', $requestInfo))  array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) array_push($query->attributesToReturn, $allEmailsAttribute);
+                 if (in_array('ALL_PHONE_NUMBERS', $requestInfo))   array_push($query->attributesToReturn, $allPhonesAttribute);
+                 if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // If PLUS - return PLUS data
             case 'PLUS':
                  $query->minRegistrationLevel = 'PLUS';
-                 array_push($query->attributesToReturn, $basicAttribute);
-                 array_push($query->attributesToReturn, $dobAttribute);
-                 array_push($query->attributesToReturn, $ssnAttribute);
-                 array_push($query->attributesToReturn, $registrationLevelAttribute);
-                 array_push($query->attributesToReturn, $allEmailsAttribute);
-                 array_push($query->attributesToReturn, $allPhonesAttribute);
-                 array_push($query->attributesToReturn, $dobAttribute);
-                 array_push($query->attributesToReturn, $ageAttribute);
-                 array_push($query->attributesToReturn, $ssnAttribute);
-                 array_push($query->attributesToReturn, $allAddressesAttribute);
+                 if (in_array('BASIC_USER_INFO', $requestInfo))     array_push($query->attributesToReturn, $basicAttribute);
+                 if (in_array('DATE_OF_BIRTH', $requestInfo))       array_push($query->attributesToReturn, $dobAttribute);
+                 if (in_array('AGE', $requestInfo))                 array_push($query->attributesToReturn, $ageAttribute);
+                 if (in_array('SSN', $requestInfo))                 array_push($query->attributesToReturn, $ssnAttribute);
+                 if (in_array('REGISTRATION_LEVEL', $requestInfo))  array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 if (in_array('ALL_EMAIL_ADDRESSES', $requestInfo)) array_push($query->attributesToReturn, $allEmailsAttribute);
+                 if (in_array('ALL_PHONE_NUMBERS', $requestInfo))   array_push($query->attributesToReturn, $allPhonesAttribute);
+                 if (in_array('ADDRESSES', $requestInfo))           array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // Another case throw an exception
