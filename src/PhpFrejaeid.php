@@ -66,8 +66,7 @@ class PhpFrejaeid {
     // Create QR code
     public function createAuthQRCode($existingCode = NULL) {
 
-        // TODO to is_null
-        if ($this->IsNullOrEmptyString($existingCode)) {
+        if (is_null($this->$existingCode)) {
             $response = $this->initAuthentication();
             if (!$response->success)
                 return $response;
@@ -410,7 +409,7 @@ class PhpFrejaeid {
         array_push($query->attributesToReturn, $userAttribute );
 
         // Check if agreement text and title is set
-        if ($this->IsNullOrEmptyString($agreementText) or $this->IsNullOrEmptyString($agreementTitle))
+        if (is_null($this->agreementText) or is_null($this->agreementTitle))
             throw new Exception('Agreement text and title must be specified.');
 
         // Check type of user login param
@@ -490,7 +489,7 @@ class PhpFrejaeid {
         $query->expiry = (time() + ($timeoutMinutes * 60)) * 1000;
 
         // Push notificationn title and text
-        if (!$this->IsNullOrEmptyString($pushTitle)) {
+        if ( ! is_null($this->pushTitle) ) {
             $pushNotification = new \stdClass();
             $pushNotification->title = $pushTitle;
             $pushNotification->text = $pushMessage;
@@ -501,7 +500,7 @@ class PhpFrejaeid {
         $dataToSign = new \stdClass();
         $dataToSign->text = base64_encode($agreementText);
 
-        if ($this->IsNullOrEmptyString($binaryData)) {
+        if ( is_null($this->binaryData)) ) {
             $query->dataToSign      = $dataToSign;
             $query->dataToSignType  = 'SIMPLE_UTF8_TEXT';
             $query->signatureType   = 'SIMPLE';
@@ -747,11 +746,6 @@ class PhpFrejaeid {
 
         return $response;
 
-    }
-
-    // TODO remove
-    private function IsNullOrEmptyString($input){
-            return (!isset($input) || trim($input)==='');
     }
 
     // Form the error object
