@@ -6,6 +6,7 @@ use Exception;
 
 class PhpFrejaeid {
 
+    // Private variables
     private $production;
     private $serviceUrl;
     private $resourceUrl;
@@ -14,37 +15,58 @@ class PhpFrejaeid {
     private $currentAuth;
     private $jwsCert;
 
-    public function __construct($certificate, $password, $production=false){
+    // Construct the class
+    public function __construct(
+      $certificate,
+      $password,
+      $production = false
+    ) {
 
+        // Set production variable
         $this->production = $production;
 
+        // If production mode
         if ($production) {
-            $this->serviceUrl = 'https://services.prod.frejaeid.com';
+
+            // Set API endpoints set to production
+            $this->serviceUrl  = 'https://services.prod.frejaeid.com';
             $this->resourceUrl = 'https://resources.prod.frejaeid.com';
 
-            if (!is_readable(__DIR__."/freja_prod.pem"))
-                throw new Exception('JWS Certificate file could not be found ('.__DIR__.'/freja_test.pem)');
+            // Read certificate
+            if ( ! is_readable( __DIR__ . '/certificates/frejaeid_cert_prod.pem') )
+                throw new Exception('JWS Certificate file could not be found (' . __DIR__ . '/certificates/frejaeid_cert_prod.pem)');
             else
-                $this->jwsCert = file_get_contents(__DIR__."/freja_prod.pem");
+                $this->jwsCert = file_get_contents( __DIR__ . '/certificates/frejaeid_cert_prod.pem');
+
+        // If test mode
         } else {
-            $this->serviceUrl = 'https://services.test.frejaeid.com';
+
+            // Set API endpoints set to test
+            $this->serviceUrl  = 'https://services.test.frejaeid.com';
             $this->resourceUrl = 'https://resources.test.frejaeid.com';
 
-            if (!is_readable(__DIR__."/freja_test.pem"))
-                throw new Exception('JWS Certificate file could not be found ('.__DIR__.'/freja_test.pem)');
+            // Read certificate
+            if ( ! is_readable( __DIR__ . '/certificates/frejaeid_cert_test.pem') )
+                throw new Exception('JWS Certificate file could not be found (' . __DIR__ . '/certificates/frejaeid_cert_test.pem)');
             else
-                $this->jwsCert = file_get_contents(__DIR__."/freja_test.pem");
+                $this->jwsCert = file_get_contents( __DIR__ . '/certificates/frejaeid_cert_test.pem');
+
         }
 
+        // If Freja eID provided certificate not found
         if (!is_readable($certificate))
-            throw new Exception('Certificate file could not be found');
+            throw new Exception('Certificate file in .pfx format could not be found. Please check if file exists or contact Freja eID to receive it.');
 
+        // Get certificate and password
         $this->certificate = $certificate;
         $this->password = $password;
+
     }
 
-    public function createAuthQRCode($existingCode=NULL) {
+    // Create QR code
+    public function createAuthQRCode($existingCode = NULL) {
 
+        // TODO to is_null
         if ($this->IsNullOrEmptyString($existingCode)) {
             $response = $this->initAuthentication();
             if (!$response->success)
@@ -52,232 +74,398 @@ class PhpFrejaeid {
             $existingCode = $response->authRef;
         }
 
+        // Create an object
         $resultObject = $this->createSuccessObject();
-        $resultObject->url = $this->resourceUrl . "/qrcode/generate?qrcodedata=frejaeid%3A%2F%2FbindUserToTransaction%3Fdimension%3D4x%3FtransactionReference%3D" . $existingCode;
+        $resultObject->url = $this->resourceUrl . '/qrcode/generate?qrcodedata=frejaeid%3A%2F%2FbindUserToTransaction%3Fdimension%3D4x%3FtransactionReference%3D' . $existingCode;
         $resultObject->authRef = $existingCode;
 
         return $resultObject;
+
     }
 
+    // Cancel the auth request
     public function cancelAuthentication($authRef) {
-        $query = new \stdClass(); $query->authRef = $authRef;
 
+        // Get the authRef param
+        $query = new \stdClass();
+        $query->authRef = $authRef;
+
+        // Form the cancellation request
         $apiPost = array(
-            "cancelAuthRequest" => base64_encode(json_encode($query))
+            'cancelAuthRequest' => base64_encode(json_encode($query))
+        );
+        $apiPostQuery = http_build_query($apiPost);
+
+        // Post to FrejaeID API cancellation request
+        $result = $this->apiRequest(
+          '/authentication/1.0/cancel',
+          $apiPostQuery
         );
 
-        $apiPostQuery = http_build_query($apiPost);
-        $result = $this->apiRequest('/authentication/1.0/cancel',$apiPostQuery);
+        // If error - return the error object
+        if ( ! $result->success)
+            return $this->createErrorObject($result->code, $result->data);
 
-        if (!$result->success)
-            return $this->createErrorObject($result->code,$result->data);
-
+        // Else return success object
         return $this->createSuccessObject();
+
     }
 
+    // Check the auth status
     public function checkAuthentication($authRef) {
-        $query = new \stdClass(); $query->authRef = $authRef;
 
+        // Get the authRef param
+        $query = new \stdClass();
+        $query->authRef = $authRef;
+
+        // Form the check request
         $apiPost = array(
-            "getOneAuthResultRequest" => base64_encode(json_encode($query))
+            'getOneAuthResultRequest' => base64_encode(json_encode($query))
+        );
+        $apiPostQuery = http_build_query($apiPost);
+
+        // Post to FrejaeID API check request
+        $result = $this->apiRequest(
+          '/authentication/1.0/getOneResult',
+          $apiPostQuery
         );
 
-        $apiPostQuery = http_build_query($apiPost);
-        $result = $this->apiRequest('/authentication/1.0/getOneResult',$apiPostQuery);
+        // If error - return the error object
+        if ( ! $result->success)
+            return $this->createErrorObject($result->code, $result->data);
 
-        if (!$result->success)
-            return $this->createErrorObject($result->code,$result->data);
-
+        // Else return success object
         return $this->createSuccessObject($result->data);
+
     }
 
-    public function initAuthentication($userType="N/A",$userInfo="N/A",$authLevel="BASIC") {
+    // Auth initialization
+    public function initAuthentication(
+      $userType  = 'N/A',
+      $userInfo  = 'N/A',
+      $authLevel = 'BASIC'
+    ) {
 
+        // Set EMAIL_ADDRESS attribute
+        $emailAttribute = new \stdClass();
+        $emailAttribute->attribute = 'EMAIL_ADDRESS';
 
-        $emailAttribute = new \stdClass(); $emailAttribute->attribute = "EMAIL_ADDRESS";
-        $userAttribute = new \stdClass(); $userAttribute->attribute = "RELYING_PARTY_USER_ID";
-        $basicAttribute = new \stdClass(); $basicAttribute->attribute = "BASIC_USER_INFO";
-        $dobAttribute = new \stdClass(); $dobAttribute->attribute = "DATE_OF_BIRTH";
-        $ssnAttribute = new \stdClass(); $ssnAttribute->attribute = "SSN";
+        // Set RELYING_PARTY_USER_ID attribute
+        $userAttribute = new \stdClass();
+        $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
 
-        $query = new \stdClass(); $query->attributesToReturn = array ( $emailAttribute );
+        // Set BASIC_USER_INFO attribute
+        $basicAttribute = new \stdClass();
+        $basicAttribute->attribute = 'BASIC_USER_INFO';
+
+        // Set DATE_OF_BIRTH attribute
+        $dobAttribute = new \stdClass();
+        $dobAttribute->attribute = 'DATE_OF_BIRTH';
+
+        // Set SSN attribute
+        $ssnAttribute = new \stdClass();
+        $ssnAttribute->attribute = 'SSN';
+
+        // TODO addresses
+
+        // Push all requested attributes to array
+        $query = new \stdClass();
+        $query->attributesToReturn = array ( $emailAttribute );
         array_push($query->attributesToReturn, $userAttribute );
 
+        // Check type of user login param
         switch ($userType) {
-            case "N/A":
-                $query->userInfoType = "INFERRED";
-                $query->userInfo = "N/A";
-                break;
-            case "PHONE":
-                $query->userInfoType = "PHONE";
-                $query->userInfo = $userInfo;
-                break;
-            case "EMAIL":
-                $query->userInfoType = "EMAIL";
-                $query->userInfo = $userInfo;
-                break;
-            case "SSN":
-                $query->userInfoType = "SSN";
-                $ssnUserinfo = new \stdClass();
-                $ssnUserinfo->country = "SE";
-                $ssnUserinfo->ssn = $userInfo;
-                $query->userInfo = base64_encode(json_encode($ssnUserinfo));
-                break;
+
+            // If not provided any data - return empty user
+            case 'N/A':
+                 $query->userInfoType = 'INFERRED';
+                 $query->userInfo     = 'N/A';
+                 break;
+
+            // In case of phone - use the phone to login
+            case 'PHONE':
+                 $query->userInfoType = 'PHONE';
+                 $query->userInfo = $userInfo;
+                 break;
+
+            // In case of email - use the email to login
+            case 'EMAIL':
+                 $query->userInfoType = 'EMAIL';
+                 $query->userInfo = $userInfo;
+                 break;
+
+            // In case of SSN - use the SSN to login (only Sweden)
+            case 'SSN':
+                 $query->userInfoType = 'SSN';
+                 $ssnUserinfo = new \stdClass();
+                 $ssnUserinfo->country = 'SE';
+                 $ssnUserinfo->ssn = $userInfo;
+                 $query->userInfo = base64_encode(json_encode($ssnUserinfo));
+                 break;
+
+            // Another case throw an exception
             default:
-                throw new Exception('User type not N/A, EMAIL or PHONE');
-                break;
-        }
-        switch ($authLevel) {
-            case "BASIC":
-                $query->minRegistrationLevel = "BASIC";
-                break;
-            case "EXTENDED":
-                $query->minRegistrationLevel = "EXTENDED";
-                array_push($query->attributesToReturn, $basicAttribute);
-                array_push($query->attributesToReturn, $dobAttribute);
-                array_push($query->attributesToReturn, $ssnAttribute);
-                break;
-            case "PLUS":
-                $query->minRegistrationLevel = "PLUS";
-                array_push($query->attributesToReturn, $basicAttribute);
-                array_push($query->attributesToReturn, $dobAttribute);
-                array_push($query->attributesToReturn, $ssnAttribute);
-                break;
-            default:
-                throw new Exception('User type not BASIC, EXTENDED or PLUS');
-                break;
+                 throw new Exception('User type not N/A, EMAIL, PHONE or SNN.');
+                 break;
+
         }
 
+        // Check the authorization level in FrejaeID
+        switch ($authLevel) {
+
+            // If BASIC - return BASIC data
+            case 'BASIC':
+                 $query->minRegistrationLevel = 'BASIC';
+                 break;
+
+            // If EXTENDED - return EXTENDED data
+            case 'EXTENDED':
+                 $query->minRegistrationLevel = 'EXTENDED';
+                 array_push($query->attributesToReturn, $basicAttribute);
+                 array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ssnAttribute);
+                 break;
+
+            // If PLUS - return PLUS data
+            case 'PLUS':
+                 $query->minRegistrationLevel = 'PLUS';
+                 array_push($query->attributesToReturn, $basicAttribute);
+                 array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ssnAttribute);
+                 break;
+
+            // Another case throw an exception
+            default:
+                 throw new Exception('User type is not BASIC, EXTENDED or PLUS. Please check the provided parameter.');
+                 break;
+        }
+
+        // Form the init request
         $apiPost = array(
-            "initAuthRequest" => base64_encode(json_encode($query))
+            'initAuthRequest' => base64_encode(json_encode($query))
         );
         $apiPostQuery = http_build_query($apiPost);
-        $result = $this->apiRequest('/authentication/1.0/initAuthentication',$apiPostQuery);
 
-        if (!$result->success)
-            return $this->createErrorObject($result->code,$result->data);
+        // Post to FrejaeID API init request
+        $result = $this->apiRequest(
+          '/authentication/1.0/initAuthentication',
+          $apiPostQuery
+        );
 
-        if (!isset($result->data->authRef))
-            return $this->createErrorObject(400,"Missing authRef from API response.");
+        // If error - return the error object
+        if ( ! $result->success)
+            return $this->createErrorObject($result->code, $result->data);
 
-        return $this->createSuccessObject($result->data);;
+        // If missed authRef - return the error object
+        if ( ! isset($result->data->authRef))
+            return $this->createErrorObject(
+              400,
+              'Missing authRef from API response.'
+            );
+
+        // If success - return the success object
+        return $this->createSuccessObject($result->data);
+
     }
 
-    public function initSignatureRequest($userType,$userInfo,$agreementText,$agreementTitle,$authLevel="BASIC",$timeoutMinutes=2,$confidential=false,$pushTitle=NULL,$pushMessage=NULL,$binaryData=NULL) {
+    public function initSignatureRequest(
+      $userType,
+      $userInfo,
+      $agreementText,
+      $agreementTitle,
+      $authLevel = 'BASIC',
+      $timeoutMinutes = 2,
+      $confidential = false,
+      $pushTitle = NULL,
+      $pushMessage = NULL,
+      $binaryData = NULL
+    ) {
 
-        $emailAttribute = new \stdClass(); $emailAttribute->attribute = "EMAIL_ADDRESS";
-        $userAttribute = new \stdClass(); $userAttribute->attribute = "RELYING_PARTY_USER_ID";
-        $basicAttribute = new \stdClass(); $basicAttribute->attribute = "BASIC_USER_INFO";
-        $dobAttribute = new \stdClass(); $dobAttribute->attribute = "DATE_OF_BIRTH";
-        $ssnAttribute = new \stdClass(); $ssnAttribute->attribute = "SSN";
+        // Set EMAIL_ADDRESS attribute
+        $emailAttribute = new \stdClass();
+        $emailAttribute->attribute = 'EMAIL_ADDRESS';
 
-        $query = new \stdClass(); $query->attributesToReturn = array ( $emailAttribute );
+        // Set RELYING_PARTY_USER_ID attribute
+        $userAttribute = new \stdClass();
+        $userAttribute->attribute = 'RELYING_PARTY_USER_ID';
+
+        // Set BASIC_USER_INFO attribute
+        $basicAttribute = new \stdClass();
+        $basicAttribute->attribute = 'BASIC_USER_INFO';
+
+        // Set DATE_OF_BIRTH attribute
+        $dobAttribute = new \stdClass();
+        $dobAttribute->attribute = 'DATE_OF_BIRTH';
+
+        // Set SSN attribute
+        $ssnAttribute = new \stdClass();
+        $ssnAttribute->attribute = 'SSN';
+
+        // TODO addresses
+
+        // Push all requested attributes to array
+        $query = new \stdClass();
+        $query->attributesToReturn = array ( $emailAttribute );
         array_push($query->attributesToReturn, $userAttribute );
 
+        // Check if agreement text and title is set
         if ($this->IsNullOrEmptyString($agreementText) or $this->IsNullOrEmptyString($agreementTitle))
-            throw new Exception('Agreement text and title must be specified');
+            throw new Exception('Agreement text and title must be specified.');
 
+        // Check type of user login param
         switch ($userType) {
-            case "PHONE":
-                $query->userInfoType = "PHONE";
-                $query->userInfo = $userInfo;
-                break;
-            case "EMAIL":
-                $query->userInfoType = "EMAIL";
-                $query->userInfo = $userInfo;
-                break;
-            case "SSN":
-                $query->userInfoType = "SSN";
-                $ssnUserinfo = new \stdClass();
-                $ssnUserinfo->country = "SE";
-                $ssnUserinfo->ssn = $userInfo;
-                $query->userInfo = base64_encode(json_encode($ssnUserinfo));
-                break;
+
+            // In case of phone - use the phone to sign
+            case 'PHONE':
+                 $query->userInfoType = 'PHONE';
+                 $query->userInfo = $userInfo;
+                 break;
+
+            // In case of email - use the email to sign
+            case 'EMAIL':
+                 $query->userInfoType = 'EMAIL';
+                 $query->userInfo = $userInfo;
+                 break;
+
+            // In case of SSN - use the SSN to sign
+            case 'SSN':
+                 $query->userInfoType = 'SSN';
+                 $ssnUserinfo = new \stdClass();
+                 $ssnUserinfo->country = 'SE';
+                 $ssnUserinfo->ssn = $userInfo;
+                 $query->userInfo = base64_encode(json_encode($ssnUserinfo));
+                 break;
+
+            // Another case throw an exception
             default:
-                throw new Exception('User type not EMAIL or PHONE');
-                break;
-        }
-        switch ($authLevel) {
-            case "BASIC":
-                $query->minRegistrationLevel = "BASIC";
-                break;
-            case "EXTENDED":
-                $query->minRegistrationLevel = "EXTENDED";
-                array_push($query->attributesToReturn, $basicAttribute);
-                array_push($query->attributesToReturn, $dobAttribute);
-                array_push($query->attributesToReturn, $ssnAttribute);
-                break;
-            case "PLUS":
-                $query->minRegistrationLevel = "PLUS";
-                array_push($query->attributesToReturn, $basicAttribute);
-                array_push($query->attributesToReturn, $dobAttribute);
-                array_push($query->attributesToReturn, $ssnAttribute);
-                break;
-            default:
-                throw new Exception('User type not BASIC, EXTENDED or PLUS');
-                break;
+                 throw new Exception('User type is not BASIC, EXTENDED or PLUS. Please check the provided parameter.');
+                 break;
         }
 
+        // Check the authorization level in FrejaeID
+        switch ($authLevel) {
+
+            // If BASIC - return BASIC data
+            case 'BASIC':
+                 $query->minRegistrationLevel = 'BASIC';
+                 break;
+
+            // If EXTENDED - return EXTENDED data
+            case 'EXTENDED':
+                 $query->minRegistrationLevel = 'EXTENDED';
+                 array_push($query->attributesToReturn, $basicAttribute);
+                 array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ssnAttribute);
+                 break;
+
+            // If PLUS - return PLUS data
+            case 'PLUS':
+                 $query->minRegistrationLevel = 'PLUS';
+                 array_push($query->attributesToReturn, $basicAttribute);
+                 array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ssnAttribute);
+                 break;
+
+            // Another case throw an exception
+            default:
+                 throw new Exception('User type not BASIC, EXTENDED or PLUS.');
+                 break;
+        }
+
+        // Set agreement
         $query->title = $agreementTitle;
         $query->confidential = $confidential;
-        $query->expiry = (time() + ($timeoutMinutes * 60))*1000;
+        $query->expiry = (time() + ($timeoutMinutes * 60)) * 1000;
 
+        // Push notificationn title and text
         if (!$this->IsNullOrEmptyString($pushTitle)) {
-            $pushNotification = new \stdClass(); $pushNotification->title = $pushTitle;
+            $pushNotification = new \stdClass();
+            $pushNotification->title = $pushTitle;
             $pushNotification->text = $pushMessage;
             $query->pushNotification = $pushNotification;
         }
 
-        $dataToSign = new \stdClass(); $dataToSign->text = base64_encode($agreementText);
+        // Contract to sign
+        $dataToSign = new \stdClass();
+        $dataToSign->text = base64_encode($agreementText);
+
         if ($this->IsNullOrEmptyString($binaryData)) {
-            $query->dataToSign = $dataToSign;
-            $query->dataToSignType = "SIMPLE_UTF8_TEXT";
-            $query->signatureType = "SIMPLE";
+            $query->dataToSign      = $dataToSign;
+            $query->dataToSignType  = 'SIMPLE_UTF8_TEXT';
+            $query->signatureType   = 'SIMPLE';
         } else {
             $dataToSign->binaryData = base64_encode($binaryData);
-            $query->dataToSign = $dataToSign;
-            $query->dataToSignType = "EXTENDED_UTF8_TEXT";
-            $query->signatureType = "EXTENDED";
+            $query->dataToSign      = $dataToSign;
+            $query->dataToSignType  = 'EXTENDED_UTF8_TEXT';
+            $query->signatureType   = 'EXTENDED';
         }
 
+        // Form the signature request
         $apiPost = array(
-            "initSignRequest" => base64_encode(json_encode($query))
+            'initSignRequest' => base64_encode(json_encode($query))
         );
         $apiPostQuery = http_build_query($apiPost);
-        $result = $this->apiRequest('/sign/1.0/initSignature',$apiPostQuery);
 
-        if (!$result->success)
-            return $this->createErrorObject($result->code,$result->data);
+        // Post to FrejaeID API signature request
+        $result = $this->apiRequest(
+          '/sign/1.0/initSignature',
+          $apiPostQuery
+        );
 
-        if (!isset($result->data->signRef))
-            return $this->createErrorObject(400,"Missing signRef from API response.");
+        // If error - return the error object
+        if ( ! $result->success )
+            return $this->createErrorObject($result->code, $result->data);
 
-        return $this->createSuccessObject($result->data);;
+        // If missed signRef - return the error object
+        if ( ! isset($result->data->signRef) )
+            return $this->createErrorObject(
+              400,
+              'Missing signRef from API response.'
+            );
+
+        // If success - return the success object
+        return $this->createSuccessObject($result->data);
     }
 
+    // Check the signature request
     public function checkSignatureRequest($signRef) {
-        $query = new \stdClass(); $query->signRef = $signRef;
 
+        // Get the signRef param
+        $query = new \stdClass();
+        $query->signRef = $signRef;
+
+        // Form the signature check request
         $apiPost = array(
-            "getOneSignResultRequest" => base64_encode(json_encode($query))
+            'getOneSignResultRequest' => base64_encode(json_encode($query))
+        );
+        $apiPostQuery = http_build_query($apiPost);
+
+        // Post to FrejaeID API signature check request
+        $result = $this->apiRequest(
+          '/sign/1.0/getOneResult',
+          $apiPostQuery
         );
 
-        $apiPostQuery = http_build_query($apiPost);
-        $result = $this->apiRequest('/sign/1.0/getOneResult',$apiPostQuery);
+        // If error - return the error object
+        if ( ! $result->success)
+            return $this->createErrorObject($result->code, $result->data);
 
-        if (!$result->success)
-            return $this->createErrorObject($result->code,$result->data);
-
-        if ($result->data->status!='APPROVED')
+        // If data status not approved - return the error object
+        if ($result->data->status != 'APPROVED')
             return $this->createSuccessObject($result->data);
 
+        // Call JWS
         $jws = new \Gamegos\JWS\JWS();
+
+        // Try to decode the signature
         try
         {
             $result->data->details = json_decode(json_encode($jws->verify($result->data->details, $this->jwsCert))); //
-            $result->data->jwsMessage = "The signed information is valid";
+            $result->data->jwsMessage = 'The signed information is valid.';
             $result->data->jwsVerified = true;
         }
+
+        // Else catch exception
         catch (Exception $e)
         {
             try
@@ -288,18 +476,22 @@ class PhpFrejaeid {
             }
             catch (Exception $e)
             {
-                return $this->createErrorObject("400","JWS decoding of the remote data failed");
+                return $this->createErrorObject(
+                  400,
+                  'JWS data decoding from the remote was failed.'
+                );
             }
         }
 
         $headers = $result->data->details->headers;
         $payload = $result->data->details->payload;
 
-        $userTicket = explode(".", $result->data->details->payload->signatureData->userSignature);
+        $userTicket = explode('.', $result->data->details->payload->signatureData->userSignature);
         $userHeader = json_decode(base64_decode($userTicket[0]));
         $userPayload = base64_decode($userTicket[1]);
         $userSignature = $userTicket[2];
 
+        // Get the details
         $result->data->details->payload->signatureData = new \stdClass();
         $result->data->details->payload->signatureData->kid = $userHeader->kid;
         $result->data->details->payload->signatureData->alg = $userHeader->alg;
@@ -311,33 +503,50 @@ class PhpFrejaeid {
         $result->data->details->x5t = $headers->x5t;
         $result->data->details->alg = $headers->alg;
 
+        // Return the success object
         return $this->createSuccessObject($result->data);
+
     }
 
     public function cancelSignatureRequest($signRef) {
-        $query = new \stdClass(); $query->signRef = $signRef;
 
+        // Get the signRef param
+        $query = new \stdClass();
+        $query->signRef = $signRef;
+
+        // Form the signature cancel request
         $apiPost = array(
-            "cancelSignRequest" => base64_encode(json_encode($query))
+            'cancelSignRequest' => base64_encode(json_encode($query))
+        );
+        $apiPostQuery = http_build_query($apiPost);
+
+        // Post to FrejaeID API signature cancel request
+        $result = $this->apiRequest(
+          '/sign/1.0/cancel',
+          $apiPostQuery
         );
 
-        $apiPostQuery = http_build_query($apiPost);
-        $result = $this->apiRequest('/sign/1.0/cancel',$apiPostQuery);
-        if (!$result->success)
-            return $this->createErrorObject($result->code,$result->data);
+        // If error - return the error object
+        if ( ! $result->success )
+            return $this->createErrorObject($result->code, $result->data);
 
+        // If success - return the success object
         return $this->createSuccessObject();
+
     }
 
+    // API cURL request
     private function apiRequest($apiUrl,$apiPostQuery){
 
+        // Init cURL
         $curl = curl_init();
 
+        // Set required API Headers
         $apiHeader = array();
         $apiHeader[] = 'Content-length: ' . strlen($apiPostQuery);
         $apiHeader[] = 'Content-type: application/json';
 
-        // cURL Options
+        // Set cURL Options
         $options = array(
             CURLOPT_URL                 => $this->serviceUrl . $apiUrl,
             CURLOPT_RETURNTRANSFER      => true,
@@ -346,22 +555,24 @@ class PhpFrejaeid {
             CURLOPT_HTTPGET             => false,
             CURLOPT_POST                => true,
             CURLOPT_FOLLOWLOCATION      => false,
-            CURLOPT_SSL_VERIFYHOST      => false, // true in production will not work due to private certs at freja
-            CURLOPT_SSL_VERIFYPEER      => false, // true in production will not work due to private certs at freja
+            CURLOPT_SSL_VERIFYHOST      => false,                               // NOTE: is set to true, in production will not work due to private certs at FrejaeID
+            CURLOPT_SSL_VERIFYPEER      => false,                               // NOTE: is set to true, in production will not work due to private certs at FrejaeID
             CURLOPT_TIMEOUT             => 30,
             CURLOPT_MAXREDIRS           => 2,
             CURLOPT_HTTPHEADER          => $apiHeader,
-            CURLOPT_USERAGENT           => 'phpFreja/1.0',
+            CURLOPT_USERAGENT           => 'phpFreja/1.0', //TODO to class name
             CURLOPT_POSTFIELDS          => $apiPostQuery,
             CURLOPT_SSLCERTTYPE         => 'P12',
             CURLOPT_SSLCERT             => $this->certificate,
             CURLOPT_KEYPASSWD           => $this->password
         );
 
+        // Set options to cURL
         curl_setopt_array($curl, $options);
         $http_output = curl_exec($curl);
         $http_info = curl_getinfo($curl);
 
+        // If error
         if (curl_errno($curl)) {
                 $response->success = false;
                 $response->code = 500;
@@ -369,64 +580,81 @@ class PhpFrejaeid {
                 return $response;
         }
 
+        // Form response and codes/errors
         $response = new \stdClass();
-        switch($http_info["http_code"]) {
+        switch($http_info['http_code']) {
+
             case 200:
-                $remoteResponse = json_decode($http_output);
-                $response->success = true;
-                $response->code = 200;
-                $response->data = $remoteResponse;
+                $remoteResponse     = json_decode($http_output);
+                $response->success  = true;
+                $response->code     = 200;
+                $response->data     = $remoteResponse;
                 break;
+
             case 204:
-                $response->success = true;
-                $response->code = 200;
-                $response->data = "";
+                $response->success  = true;
+                $response->code     = 200;
+                $response->data     = '';
                 break;
+
             case 404:
+
             case 410:
-                $response->success = false;
-                $response->code = 404;
-                $response->data = "Remote API reported the resource to be not found.";
+                $response->success  = false;
+                $response->code     = 404;
+                $response->data     = 'Freja eID API reported the resource cannot be found.';
                 break;
+
             case 400:
-                $response->success = false;
-                $response->code = 400;
-                $response->data = "Remote API reported it cannot parse the request.";
+                $response->success  = false;
+                $response->code     = 400;
+                $response->data     = 'Freja eID API reported the request cannot be parsed.';
                 break;
+
             case 422:
-                $remoteResponse = json_decode($http_output);
-                $response->success = false;
-                $response->code = 400;
-                $response->data = "Remote API reported processing errors: ".$remoteResponse->message;
+                $remoteResponse     = json_decode($http_output);
+                $response->success  = false;
+                $response->code     = 400;
+                $response->data     = 'Freja eID API reported processing errors: ' . $remoteResponse->message;
                 break;
+
             case 500:
-                $response->success = false;
-                $response->code = 500;
-                $response->data = "Remote API reported a internal error.";
+                $response->success  = false;
+                $response->code     = 500;
+                $response->data     = 'Freja eID API reported an internal error.';
                 break;
+
             default:
-                $response->success = false;
-                $response->code = 500;
-                $response->data = "A unknown status was reported: ".$remoteResponse->code;
+                $response->success  = false;
+                $response->code     = 500;
+                $response->data     = 'Freja eID API reported an unknown status: ' . $remoteResponse->code;
                 $response->http_data = $http_output;
                 break;
+
         }
 
         return $response;
+
     }
 
+    // TODO remove
     private function IsNullOrEmptyString($input){
             return (!isset($input) || trim($input)==='');
     }
 
-    private function createErrorObject($error_code,$error_message){
-        $resultObject = new \stdClass();
-        $resultObject->success = false;
-        $resultObject->code = $error_code;
-        $resultObject->message = $error_message;
+    // Form the error object
+    private function createErrorObject(
+      $error_code,
+      $error_message
+    ) {
+        $resultObject           = new \stdClass();
+        $resultObject->success  = false;
+        $resultObject->code     = $error_code;
+        $resultObject->message  = $error_message;
         return $resultObject;
     }
 
+    // Form the success object
     private function createSuccessObject($dataObject) {
         if (!isset($dataObject)) {
             $dataObject = new \stdClass();
@@ -434,7 +662,6 @@ class PhpFrejaeid {
         $dataObject->success = true;
         return $dataObject;
     }
-
 
 }
 
