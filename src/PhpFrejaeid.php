@@ -148,7 +148,7 @@ class PhpFrejaeid {
     ) {
 
         // If no request info provided...
-        if ($requestInfo = null) {
+        if (empty($requestInfo)) {
           return $this->createErrorObject(
             400,
             'Missing request info from FrejaeID. Please request one or several attributes for EXTENDED and PLUS levels: EMAIL_ADDRESS, RELYING_PARTY_USER_ID, BASIC_USER_INFO, DATE_OF_BIRTH, SSN, ALL_EMAIL_ADDRESSES, ALL_PHONE_NUMBERS, AGE, ADDRESSES, REGISTRATION_LEVEL. For BASIC level allowed only: EMAIL_ADDRESS, REGISTRATION_LEVEL'
@@ -343,7 +343,7 @@ class PhpFrejaeid {
     ) {
 
         // If no request info provided...
-        if ($requestInfo = null) {
+        if (empty($requestInfo)) {
           return $this->createErrorObject(
             400,
             'Missing request info from FrejaeID. Please request one or several attributes for EXTENDED and PLUS levels: EMAIL_ADDRESS, RELYING_PARTY_USER_ID, BASIC_USER_INFO, DATE_OF_BIRTH, SSN, ALL_EMAIL_ADDRESSES, ALL_PHONE_NUMBERS, AGE, ADDRESSES, REGISTRATION_LEVEL. For BASIC level allowed only: EMAIL_ADDRESS, REGISTRATION_LEVEL'
