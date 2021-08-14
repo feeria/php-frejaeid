@@ -54,7 +54,7 @@ class PhpFrejaeid {
         }
 
         // If Freja eID provided certificate not found
-        if (!is_readable($certificate))
+        if ( ! is_readable($certificate) )
             throw new Exception('Certificate file in .pfx format could not be found. Please check if file exists or contact Freja eID to receive it.');
 
         // Get certificate and password
