@@ -166,7 +166,25 @@ class PhpFrejaeid {
         $ssnAttribute = new \stdClass();
         $ssnAttribute->attribute = 'SSN';
 
-        // TODO addresses
+        // Set ALL_EMAIL_ADDRESSES attribute
+        $allEmailsAttribute = new \stdClass();
+        $allEmailsAttribute->attribute = 'ALL_EMAIL_ADDRESSES';
+
+        // Set ALL_PHONE_NUMBERS attribute
+        $allPhonesAttribute = new \stdClass();
+        $allPhonesAttribute->attribute = 'ALL_PHONE_NUMBERS';
+
+        // Set AGE attribute
+        $ageAttribute = new \stdClass();
+        $ageAttribute->attribute = 'AGE';
+
+        // Set ADDRESSES attribute
+        $allAddressesAttribute = new \stdClass();
+        $allAddressesAttribute->attribute = 'ADDRESSES';
+
+        // Set REGISTRATION_LEVEL attribute
+        $registrationLevelAttribute = new \stdClass();
+        $registrationLevelAttribute->attribute = 'REGISTRATION_LEVEL';
 
         // Push all requested attributes to array
         $query = new \stdClass();
@@ -216,22 +234,33 @@ class PhpFrejaeid {
             // If BASIC - return BASIC data
             case 'BASIC':
                  $query->minRegistrationLevel = 'BASIC';
+                 array_push($query->attributesToReturn, $registrationLevelAttribute);
                  break;
 
             // If EXTENDED - return EXTENDED data
             case 'EXTENDED':
                  $query->minRegistrationLevel = 'EXTENDED';
                  array_push($query->attributesToReturn, $basicAttribute);
+                 array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 array_push($query->attributesToReturn, $allEmailsAttribute);
+                 array_push($query->attributesToReturn, $allPhonesAttribute);
                  array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ageAttribute);
                  array_push($query->attributesToReturn, $ssnAttribute);
+                 array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // If PLUS - return PLUS data
             case 'PLUS':
                  $query->minRegistrationLevel = 'PLUS';
                  array_push($query->attributesToReturn, $basicAttribute);
+                 array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 array_push($query->attributesToReturn, $allEmailsAttribute);
+                 array_push($query->attributesToReturn, $allPhonesAttribute);
                  array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ageAttribute);
                  array_push($query->attributesToReturn, $ssnAttribute);
+                 array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // Another case throw an exception
@@ -301,7 +330,25 @@ class PhpFrejaeid {
         $ssnAttribute = new \stdClass();
         $ssnAttribute->attribute = 'SSN';
 
-        // TODO addresses
+        // Set ALL_EMAIL_ADDRESSES attribute
+        $allEmailsAttribute = new \stdClass();
+        $allEmailsAttribute->attribute = 'ALL_EMAIL_ADDRESSES';
+
+        // Set ALL_PHONE_NUMBERS attribute
+        $allPhonesAttribute = new \stdClass();
+        $allPhonesAttribute->attribute = 'ALL_PHONE_NUMBERS';
+
+        // Set AGE attribute
+        $ageAttribute = new \stdClass();
+        $ageAttribute->attribute = 'AGE';
+
+        // Set ADDRESSES attribute
+        $allAddressesAttribute = new \stdClass();
+        $allAddressesAttribute->attribute = 'ADDRESSES';
+
+        // Set REGISTRATION_LEVEL attribute
+        $registrationLevelAttribute = new \stdClass();
+        $registrationLevelAttribute->attribute = 'REGISTRATION_LEVEL';
 
         // Push all requested attributes to array
         $query = new \stdClass();
@@ -348,6 +395,7 @@ class PhpFrejaeid {
             // If BASIC - return BASIC data
             case 'BASIC':
                  $query->minRegistrationLevel = 'BASIC';
+                 array_push($query->attributesToReturn, $registrationLevelAttribute);
                  break;
 
             // If EXTENDED - return EXTENDED data
@@ -356,6 +404,13 @@ class PhpFrejaeid {
                  array_push($query->attributesToReturn, $basicAttribute);
                  array_push($query->attributesToReturn, $dobAttribute);
                  array_push($query->attributesToReturn, $ssnAttribute);
+                 array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 array_push($query->attributesToReturn, $allEmailsAttribute);
+                 array_push($query->attributesToReturn, $allPhonesAttribute);
+                 array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ageAttribute);
+                 array_push($query->attributesToReturn, $ssnAttribute);
+                 array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // If PLUS - return PLUS data
@@ -364,6 +419,13 @@ class PhpFrejaeid {
                  array_push($query->attributesToReturn, $basicAttribute);
                  array_push($query->attributesToReturn, $dobAttribute);
                  array_push($query->attributesToReturn, $ssnAttribute);
+                 array_push($query->attributesToReturn, $registrationLevelAttribute);
+                 array_push($query->attributesToReturn, $allEmailsAttribute);
+                 array_push($query->attributesToReturn, $allPhonesAttribute);
+                 array_push($query->attributesToReturn, $dobAttribute);
+                 array_push($query->attributesToReturn, $ageAttribute);
+                 array_push($query->attributesToReturn, $ssnAttribute);
+                 array_push($query->attributesToReturn, $allAddressesAttribute);
                  break;
 
             // Another case throw an exception
